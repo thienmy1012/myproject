@@ -216,6 +216,9 @@ body {
   font-size: 11px; font-weight: 700; color: #fff;
 }
 .user-name { font-size: 12px; font-weight: 500; color: var(--text2); }
+.role-badge { font-size: 10px; font-weight: bold; padding: 1px 5px; border-radius: 4px; text-transform: uppercase; margin-left: 2px;}
+.role-admin { background: rgba(245,166,35,0.2); color: var(--amber); }
+.role-user { background: rgba(79,142,247,0.2); color: var(--accent); }
 
 .btn-logout {
   background: none;
@@ -247,7 +250,7 @@ body {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* MAIN CONTENT */
-.main { padding: 28px; max-width: 1400px; margin: 0 auto; width: 100%; }
+.main { padding: 28px; max-width: 1500px; margin: 0 auto; width: 100%; }
 
 /* STATS ROW */
 .stats-row {
@@ -298,7 +301,7 @@ body {
   font-family: var(--font);
   font-size: 13px;
   outline: none;
-  width: 240px;
+  width: 280px;
   transition: border-color 0.2s;
 }
 .filter-bar input[type=text]:focus { border-color: var(--accent); }
@@ -339,9 +342,9 @@ table {
 }
 th {
   background: var(--bg3);
-  padding: 10px 16px;
+  padding: 12px 16px;
   text-align: left;
-  font-size: 10px; font-weight: 600;
+  font-size: 11px; font-weight: 600;
   color: var(--text3);
   text-transform: uppercase;
   letter-spacing: 0.8px;
@@ -357,13 +360,15 @@ td {
 tr:last-child td { border-bottom: none; }
 tr:hover td { background: rgba(255,255,255,0.02); }
 
-.task-name { font-weight: 500; color: var(--text); }
-.task-owner { color: var(--text2); font-size: 12px; }
+.task-name { font-weight: 600; color: var(--text); }
+.task-sub-info { font-size: 11px; color: var(--text3); margin-top: 2px; font-family: var(--mono); }
+.task-owner { color: var(--text); font-weight: 500; }
+.task-dept { color: var(--text2); font-size: 12px; }
 .task-my { color: var(--accent); font-size: 10px; font-weight: 600; background: rgba(79,142,247,0.12); padding: 2px 6px; border-radius: 4px; margin-left: 6px; }
 
 .date-cell { font-family: var(--mono); font-size: 12px; color: var(--text2); }
-.date-warn { color: var(--amber); }
-.date-over { color: var(--red); }
+.date-warn { color: var(--amber); font-weight: 500; }
+.date-over { color: var(--red); font-weight: 500; }
 .date-ok   { color: var(--green); }
 
 /* STATUS BADGE */
@@ -380,7 +385,6 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 .badge.doing    { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(245,166,35,0.25); }
 .badge.done     { background: var(--green-bg); color: var(--green); border: 1px solid rgba(52,210,152,0.25); }
 .badge.overdue  { background: var(--red-bg); color: var(--red); border: 1px solid rgba(240,92,92,0.25); }
-.badge.prepare  { background: var(--purple-bg); color: var(--purple); border: 1px solid rgba(167,139,250,0.25); }
 
 .badge::before {
   content: '';
@@ -442,9 +446,9 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 }
 
 /* TIMELINE CHIPS inside table */
-.timeline-cell { display: flex; flex-direction: column; gap: 3px; }
+.timeline-cell { display: flex; flex-direction: column; gap: 4px; min-width: 190px; }
 .tl-item { font-size: 11px; font-family: var(--mono); }
-.tl-label { color: var(--text3); font-size: 10px; }
+.tl-label { color: var(--text3); font-size: 11px; }
 
 /* TOAST */
 .toast-wrap {
@@ -493,520 +497,4 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   max-width: 440px;
   animation: fadeUp 0.25s ease;
 }
-.modal h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
-.modal p { color: var(--text2); font-size: 13px; margin-bottom: 20px; line-height: 1.6; }
-.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
-.modal textarea {
-  width: 100%;
-  background: var(--bg3);
-  border: 1px solid var(--border2);
-  border-radius: var(--radius-sm);
-  padding: 10px 14px;
-  color: var(--text);
-  font-family: var(--font);
-  font-size: 13px;
-  resize: vertical;
-  min-height: 90px;
-  outline: none;
-  margin-bottom: 16px;
-  transition: border-color 0.2s;
-}
-.modal textarea:focus { border-color: var(--accent); }
-.btn-cancel {
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 9px 18px;
-  font-size: 13px; font-weight: 500;
-  color: var(--text2);
-  cursor: pointer;
-  font-family: var(--font);
-  transition: all 0.2s;
-}
-.btn-cancel:hover { color: var(--text); border-color: var(--border2); }
-.btn-confirm {
-  background: var(--accent);
-  border: none;
-  border-radius: var(--radius-sm);
-  padding: 9px 18px;
-  font-size: 13px; font-weight: 600;
-  color: #fff;
-  cursor: pointer;
-  font-family: var(--font);
-  transition: background 0.2s;
-}
-.btn-confirm:hover { background: var(--accent2); }
-
-/* RESPONSIVE */
-@media (max-width: 768px) {
-  .stats-row { grid-template-columns: repeat(2,1fr); }
-  .main { padding: 16px; }
-  .topbar { padding: 0 16px; }
-  th:nth-child(4), td:nth-child(4),
-  th:nth-child(5), td:nth-child(5) { display: none; }
-}
-</style>
-</head>
-<body>
-
-<!-- ═══════════════ LOGIN ═══════════════ -->
-<div id="login-screen">
-  <div class="login-card">
-    <div class="login-logo">
-      <div class="dot">D</div>
-      <span>Deadline Manager</span>
-    </div>
-    <h2>Đăng nhập</h2>
-    <p class="sub">Hệ thống quản lý công việc & deadline nội bộ</p>
-    <div class="form-group">
-      <label>Email</label>
-      <input type="email" id="inp-email" placeholder="ten@cpc1hn.com" autocomplete="email">
-    </div>
-    <div class="form-group">
-      <label>Mật khẩu</label>
-      <input type="password" id="inp-pass" placeholder="••••••••" autocomplete="current-password">
-    </div>
-    <button class="btn-login" id="btn-login" onclick="doLogin()">Đăng nhập</button>
-    <div class="login-error" id="login-error"></div>
-  </div>
-</div>
-
-<!-- ═══════════════ APP ═══════════════ -->
-<div id="app">
-  <!-- TOPBAR -->
-  <div class="topbar">
-    <div class="topbar-left">
-      <div class="topbar-logo">D</div>
-      <span class="topbar-title">Quản lý Deadline</span>
-    </div>
-    <div class="topbar-right">
-      <button class="btn-refresh" id="btn-refresh" onclick="loadTasks()">
-        <svg id="refresh-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-          <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-        </svg>
-        Làm mới
-      </button>
-      <div class="user-badge">
-        <div class="user-avatar" id="top-avatar">?</div>
-        <span class="user-name" id="top-uname">...</span>
-      </div>
-      <button class="btn-logout" onclick="doLogout()">Đăng xuất</button>
-    </div>
-  </div>
-
-  <!-- MAIN -->
-  <div class="main">
-    <!-- STATS -->
-    <div class="stats-row">
-      <div class="stat-card blue">
-        <div class="stat-label">Tổng công việc</div>
-        <div class="stat-value" id="stat-total">—</div>
-        <div class="stat-sub">Trong kỳ hiện tại</div>
-      </div>
-      <div class="stat-card amber">
-        <div class="stat-label">Sắp đến hạn</div>
-        <div class="stat-value" id="stat-warn">—</div>
-        <div class="stat-sub">Trong 30 ngày tới</div>
-      </div>
-      <div class="stat-card red">
-        <div class="stat-label">Quá hạn</div>
-        <div class="stat-value" id="stat-over">—</div>
-        <div class="stat-sub">Chưa hoàn thành</div>
-      </div>
-      <div class="stat-card green">
-        <div class="stat-label">Hoàn thành</div>
-        <div class="stat-value" id="stat-done">—</div>
-        <div class="stat-sub">Đã xác nhận</div>
-      </div>
-    </div>
-
-    <!-- FILTER -->
-    <div class="filter-bar">
-      <input type="text" id="search-input" placeholder="🔍  Tìm công việc, người phụ trách..." oninput="renderTable()">
-      <button class="filter-btn active" onclick="setFilter('all',this)">Tất cả</button>
-      <button class="filter-btn" onclick="setFilter('mine',this)">Của tôi</button>
-      <button class="filter-btn" onclick="setFilter('overdue',this)">Quá hạn</button>
-      <button class="filter-btn" onclick="setFilter('soon',this)">Sắp hạn</button>
-      <button class="filter-btn" onclick="setFilter('done',this)">Hoàn thành</button>
-    </div>
-
-    <!-- TABLE -->
-    <div class="table-wrap">
-      <div class="table-header-row">
-        <span class="table-title">Danh sách công việc</span>
-        <span class="table-count" id="tbl-count">—</span>
-      </div>
-      <div style="overflow-x:auto">
-        <table>
-          <thead>
-            <tr>
-              <th>Công việc</th>
-              <th>Người phụ trách</th>
-              <th>Deadline</th>
-              <th>Mốc chuẩn bị</th>
-              <th>Còn lại</th>
-              <th>Trạng thái</th>
-              <th>Thao tác</th>
-            </tr>
-          </thead>
-          <tbody id="task-tbody">
-            <tr class="loading-row"><td colspan="7"><div class="spinner"></div>Đang tải dữ liệu từ n8n...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL BÁO CÁO -->
-<div class="modal-overlay" id="modal-report">
-  <div class="modal">
-    <h3>📋 Báo cáo tiến độ</h3>
-    <p>Nhập nội dung báo cáo cho công việc: <strong id="modal-task-name"></strong></p>
-    <textarea id="modal-note" placeholder="Mô tả tiến độ hiện tại, khó khăn gặp phải, dự kiến hoàn thành..."></textarea>
-    <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeModal()">Hủy</button>
-      <button class="btn-confirm" onclick="submitReport()">Gửi báo cáo</button>
-    </div>
-  </div>
-</div>
-
-<!-- TOAST CONTAINER -->
-<div class="toast-wrap" id="toast-wrap"></div>
-
-<script>
-const WEBHOOK = 'https://n8n.cpc1hn.com/webhook/ec6f3126-f0eb-4364-a9a3-b3980378beee';
-
-// ── USER ACCOUNTS (lưu trong JS, thêm tài khoản tại đây) ──
-// Định dạng: { email, password, name, role: 'admin'|'user' }
-const USERS = [
-  { email: 'mytnt.qa@cpc1hn.com',  password: 'cpc1hn@2025', name: 'My TNT',   role: 'user' },
-  { email: 'nhiph.qa@cpc1hn.com',  password: 'cpc1hn@2025', name: 'Nhi PH',   role: 'user' },
-];
-
-let currentUser = null;
-let allTasks = [];
-let currentFilter = 'all';
-let pendingReportTask = null;
-
-// ── SESSION ──
-function initSession() {
-  const saved = sessionStorage.getItem('dlm_user');
-  if (saved) {
-    currentUser = JSON.parse(saved);
-    showApp();
-    loadTasks();
-  }
-}
-
-// ── LOGIN ──
-function doLogin() {
-  const email = document.getElementById('inp-email').value.trim().toLowerCase();
-  const pass  = document.getElementById('inp-pass').value;
-  const errEl = document.getElementById('login-error');
-  const btn   = document.getElementById('btn-login');
-
-  errEl.style.display = 'none';
-  const user = USERS.find(u => u.email.toLowerCase() === email && u.password === pass);
-
-  if (!user) {
-    errEl.textContent = 'Email hoặc mật khẩu không đúng.';
-    errEl.style.display = 'block';
-    return;
-  }
-
-  currentUser = user;
-  sessionStorage.setItem('dlm_user', JSON.stringify(user));
-  btn.disabled = true;
-  btn.textContent = 'Đang vào...';
-  setTimeout(() => { btn.disabled = false; btn.textContent = 'Đăng nhập'; showApp(); loadTasks(); }, 400);
-}
-
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') doLogin();
-});
-
-function showApp() {
-  document.getElementById('login-screen').style.display = 'none';
-  const app = document.getElementById('app');
-  app.style.display = 'flex';
-  document.getElementById('top-avatar').textContent = currentUser.name.charAt(0).toUpperCase();
-  document.getElementById('top-uname').textContent = currentUser.name;
-}
-
-function doLogout() {
-  sessionStorage.removeItem('dlm_user');
-  currentUser = null; allTasks = [];
-  document.getElementById('login-screen').style.display = '';
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('inp-pass').value = '';
-}
-
-// ── LOAD TASKS FROM N8N ──
-async function loadTasks() {
-  const btn = document.getElementById('btn-refresh');
-  btn.classList.add('spinning');
-  document.getElementById('task-tbody').innerHTML =
-    '<tr class="loading-row"><td colspan="7"><div class="spinner"></div>Đang tải từ n8n...</td></tr>';
-
-  try {
-    const res = await fetch(WEBHOOK, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'get_tasks', user: currentUser.email, role: currentUser.role })
-    });
-    const data = await res.json();
-
-    // Hỗ trợ cả mảng trực tiếp và object { tasks: [...] }
-    allTasks = Array.isArray(data) ? data : (data.tasks || data.data || []);
-
-    // Nếu n8n chưa xây xong workflow, dùng dữ liệu mẫu
-    if (!allTasks.length) allTasks = getSampleData();
-
-    updateStats();
-    renderTable();
-    showToast('Đã tải ' + allTasks.length + ' công việc', 'success');
-  } catch(e) {
-    console.warn('Webhook error, dùng dữ liệu mẫu:', e);
-    allTasks = getSampleData();
-    updateStats();
-    renderTable();
-    showToast('Đang dùng dữ liệu mẫu (chưa kết nối n8n)', 'info');
-  }
-  btn.classList.remove('spinning');
-}
-
-// ── SAMPLE DATA (dùng khi chưa có n8n) ──
-function getSampleData() {
-  const today = new Date();
-  const d = (offset) => {
-    const dt = new Date(today); dt.setDate(dt.getDate() + offset);
-    return dt.toISOString().split('T')[0];
-  };
-  return [
-    { id:1, task:'Thẩm định dự án Đường dây 110kV Tân Bình', owner:'nguyen@cpc1hn.com', ownerName:'Nguyễn Văn A', deadline: d(45), prepareDoc: d(15), fieldCheck: d(25), finalReport: d(40), status:'doing', quarter:'Q3/2025' },
-    { id:2, task:'Báo cáo quyết toán TBA 110kV Long Biên', owner:'tran@cpc1hn.com', ownerName:'Trần Thị B', deadline: d(20), prepareDoc: d(-10), fieldCheck: d(0), finalReport: d(15), status:'doing', quarter:'Q3/2025' },
-    { id:3, task:'Thẩm định TBA 220kV Hà Đông mở rộng', owner:'le@cpc1hn.com', ownerName:'Lê Minh C', deadline: d(-5), prepareDoc: d(-35), fieldCheck: d(-25), finalReport: d(-10), status:'todo', quarter:'Q3/2025' },
-    { id:4, task:'Kiểm tra hiện trạng Đường dây 35kV Cầu Giấy', owner:'pham@cpc1hn.com', ownerName:'Phạm Thị D', deadline: d(60), prepareDoc: d(30), fieldCheck: d(40), finalReport: d(55), status:'todo', quarter:'Q4/2025' },
-    { id:5, task:'Thẩm định dự án Cáp ngầm 22kV Hoàn Kiếm', owner:'nguyen@cpc1hn.com', ownerName:'Nguyễn Văn A', deadline: d(10), prepareDoc: d(-20), fieldCheck: d(-10), finalReport: d(5), status:'doing', quarter:'Q3/2025' },
-    { id:6, task:'Nghiệm thu TBA 110kV Sóc Sơn 2', owner:'tran@cpc1hn.com', ownerName:'Trần Thị B', deadline: d(-15), prepareDoc: d(-45), fieldCheck: d(-35), finalReport: d(-20), status:'done', quarter:'Q3/2025' },
-  ];
-}
-
-// ── STATS ──
-function updateStats() {
-  const today = new Date(); today.setHours(0,0,0,0);
-  const in30 = new Date(today); in30.setDate(in30.getDate()+30);
-  let warn=0, over=0, done=0;
-  allTasks.forEach(t => {
-    if (t.status === 'done') { done++; return; }
-    const dl = new Date(t.deadline);
-    if (dl < today) over++;
-    else if (dl <= in30) warn++;
-  });
-  document.getElementById('stat-total').textContent = allTasks.length;
-  document.getElementById('stat-warn').textContent  = warn;
-  document.getElementById('stat-over').textContent  = over;
-  document.getElementById('stat-done').textContent  = done;
-}
-
-// ── FILTER ──
-function setFilter(f, el) {
-  currentFilter = f;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
-  renderTable();
-}
-
-// ── RENDER TABLE ──
-function renderTable() {
-  const search = document.getElementById('search-input').value.toLowerCase();
-  const today = new Date(); today.setHours(0,0,0,0);
-  const in30 = new Date(today); in30.setDate(in30.getDate()+30);
-
-  let tasks = allTasks.filter(t => {
-    const matchSearch = !search ||
-      t.task.toLowerCase().includes(search) ||
-      (t.ownerName||'').toLowerCase().includes(search) ||
-      (t.owner||'').toLowerCase().includes(search);
-    if (!matchSearch) return false;
-    const dl = new Date(t.deadline);
-    if (currentFilter === 'mine')   return t.owner === currentUser.email;
-    if (currentFilter === 'overdue') return t.status !== 'done' && dl < today;
-    if (currentFilter === 'soon')   return t.status !== 'done' && dl >= today && dl <= in30;
-    if (currentFilter === 'done')   return t.status === 'done';
-    return true;
-  });
-
-  document.getElementById('tbl-count').textContent = tasks.length + ' công việc';
-  const tbody = document.getElementById('task-tbody');
-
-  if (!tasks.length) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="7">Không có công việc nào phù hợp</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = tasks.map(t => {
-    const dl = new Date(t.deadline);
-    const daysLeft = Math.round((dl - today) / 86400000);
-    const isOwner = t.owner === currentUser.email || currentUser.role === 'admin';
-    const isOverdue = t.status !== 'done' && daysLeft < 0;
-
-    // Status
-    let statusBadge, effectiveStatus = t.status;
-    if (isOverdue && t.status !== 'done') effectiveStatus = 'overdue';
-    const statusMap = {
-      todo:    '<span class="badge todo">Chưa làm</span>',
-      doing:   '<span class="badge doing">Đang làm</span>',
-      done:    '<span class="badge done">Hoàn thành</span>',
-      overdue: '<span class="badge overdue">Quá hạn</span>',
-    };
-    statusBadge = statusMap[effectiveStatus] || statusMap.todo;
-
-    // Days chip
-    let daysChip;
-    if (t.status === 'done') {
-      daysChip = '<span class="days-chip done">✓ Xong</span>';
-    } else if (daysLeft < 0) {
-      daysChip = `<span class="days-chip danger">${Math.abs(daysLeft)}n quá hạn</span>`;
-    } else if (daysLeft <= 7) {
-      daysChip = `<span class="days-chip danger">${daysLeft} ngày</span>`;
-    } else if (daysLeft <= 30) {
-      daysChip = `<span class="days-chip warn">${daysLeft} ngày</span>`;
-    } else {
-      daysChip = `<span class="days-chip ok">${daysLeft} ngày</span>`;
-    }
-
-    // Timeline
-    const fmtDate = (s) => {
-      if (!s) return '—';
-      const d = new Date(s);
-      const now = new Date(); now.setHours(0,0,0,0);
-      const diff = Math.round((d - now)/86400000);
-      let cls = 'date-cell';
-      if (diff < 0) cls += ' date-over';
-      else if (diff <= 7) cls += ' date-warn';
-      return `<span class="${cls}">${d.toLocaleDateString('vi-VN')}</span>`;
-    };
-
-    const timelineHtml = `
-      <div class="timeline-cell">
-        <div class="tl-item"><span class="tl-label">📝 Đề cương: </span>${fmtDate(t.prepareDoc)}</div>
-        <div class="tl-item"><span class="tl-label">🔍 Thẩm định: </span>${fmtDate(t.fieldCheck)}</div>
-        <div class="tl-item"><span class="tl-label">📄 Báo cáo: </span>${fmtDate(t.finalReport)}</div>
-      </div>`;
-
-    // Actions (chỉ owner mới bấm được)
-    let actions;
-    if (!isOwner) {
-      actions = '<span style="color:var(--text3);font-size:11px">Chỉ xem</span>';
-    } else if (t.status === 'done') {
-      actions = '<span style="color:var(--green);font-size:11px">✓ Đã hoàn thành</span>';
-    } else {
-      actions = `
-        <div class="action-row">
-          <button class="btn-action doing" onclick="updateStatus(${t.id},'doing')" ${t.status==='doing'?'disabled':''}>Đang làm</button>
-          <button class="btn-action done"  onclick="updateStatus(${t.id},'done')">Hoàn thành</button>
-          <button class="btn-action report" onclick="openReport(${t.id})">Báo cáo</button>
-        </div>`;
-    }
-
-    const ownerTag = t.owner === currentUser.email ? '<span class="task-my">Của tôi</span>' : '';
-
-    return `<tr>
-      <td><div class="task-name">${t.task}${ownerTag}</div></td>
-      <td><div class="task-owner">${t.ownerName || t.owner}</div></td>
-      <td>${fmtDate(t.deadline)}</td>
-      <td>${timelineHtml}</td>
-      <td>${daysChip}</td>
-      <td>${statusBadge}</td>
-      <td>${actions}</td>
-    </tr>`;
-  }).join('');
-}
-
-// ── UPDATE STATUS ──
-async function updateStatus(taskId, newStatus) {
-  const task = allTasks.find(t => t.id === taskId);
-  if (!task) return;
-
-  try {
-    await fetch(WEBHOOK, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'update_status',
-        taskId, newStatus,
-        user: currentUser.email,
-        userName: currentUser.name,
-        timestamp: new Date().toISOString()
-      })
-    });
-  } catch(e) { /* offline mode */ }
-
-  task.status = newStatus;
-  updateStats();
-  renderTable();
-  const label = newStatus === 'done' ? 'Đã đánh dấu hoàn thành' : 'Đã cập nhật: Đang làm';
-  showToast(label, 'success');
-}
-
-// ── REPORT MODAL ──
-function openReport(taskId) {
-  pendingReportTask = allTasks.find(t => t.id === taskId);
-  if (!pendingReportTask) return;
-  document.getElementById('modal-task-name').textContent = pendingReportTask.task;
-  document.getElementById('modal-note').value = '';
-  document.getElementById('modal-report').classList.add('open');
-}
-
-function closeModal() {
-  document.getElementById('modal-report').classList.remove('open');
-  pendingReportTask = null;
-}
-
-async function submitReport() {
-  if (!pendingReportTask) return;
-  const note = document.getElementById('modal-note').value.trim();
-  if (!note) { showToast('Vui lòng nhập nội dung báo cáo', 'error'); return; }
-
-  try {
-    await fetch(WEBHOOK, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'report',
-        taskId: pendingReportTask.id,
-        taskName: pendingReportTask.task,
-        note, user: currentUser.email, userName: currentUser.name,
-        timestamp: new Date().toISOString()
-      })
-    });
-    showToast('Đã gửi báo cáo thành công', 'success');
-  } catch(e) {
-    showToast('Lỗi gửi báo cáo, thử lại sau', 'error');
-  }
-  closeModal();
-}
-
-// ── TOAST ──
-function showToast(msg, type='info') {
-  const icons = { success:'✓', error:'✕', info:'ℹ' };
-  const wrap = document.getElementById('toast-wrap');
-  const el = document.createElement('div');
-  el.className = `toast ${type}`;
-  el.innerHTML = `<span class="ti">${icons[type]||'ℹ'}</span>${msg}`;
-  wrap.appendChild(el);
-  setTimeout(() => { el.style.animation = 'toastOut 0.3s ease forwards'; setTimeout(()=>el.remove(), 300); }, 3000);
-}
-
-// Click outside modal
-document.getElementById('modal-report').addEventListener('click', function(e) {
-  if (e.target === this) closeModal();
-});
-
-// ── INIT ──
-initSession();
-</script>
-</body>
-</html>
+.modal h3 { font-size: 17px; font-
