@@ -1,10 +1,84 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kế Hoạch Thẩm Định Thiết Bị</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; background-color: #f9f9f9; }
+        h2 { color: #333; text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #4CAF50; color: white; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        tr:hover { background-color: #ddd; }
+        .loading { text-align: center; font-weight: bold; color: #666; margin-top: 20px; }
+    </style>
+</head>
 <body>
-  <h1>Xin chào!</h1>
-  <form id="contactForm">
-    <input type="text" id="name" placeholder="Tên của bạn">
-    <button onclick="submitForm()">Gửi</button>
-  </form>
+
+    <h2>DANH SÁCH KẾ HOẠCH THẨM ĐỊNH THIẾT BỊ HỆ THỐNG</h2>
+    
+    <div id="loading" class="loading">Đang tải dữ liệu từ hệ thống n8n...</div>
+    
+    <table id="deviceTable" style="display: none;">
+        <thead>
+            <tr>
+                <th>Mã Thiết Bị</th>
+                <th>Tên Thiết Bị / Đường Ống</th>
+                <th>Nội Dung Thẩm Định</th>
+                <th>Hạn Cuối</th>
+                <th>Chuẩn Bị Đề Cương (Trước 1 Tháng)</th>
+                <th>Thực Hiện Thẩm Định (Trước 20 Ngày)</th>
+                <th>Hoàn Thành Báo Cáo (Trước 5 Days)</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            </tbody>
+    </table>
+
+    <script>
+        // THAY ĐƯỜNG LINK PRODUCTION URL BẠN COPY Ở BƯỚC 1 VÀO ĐÂY
+        const webhookUrl = 'https://n8n.cpc1hn.com/webhook/ec6f3126-f0eb-4364-a9a3-b3980378beee';
+
+        async function loadData() {
+            try {
+                const response = await fetch(webhookUrl);
+                if (!response.ok) throw new Error('Không thể kết nối với n8n');
+                
+                const data = await response.all ? await response.json() : await response.json();
+                
+                const tableBody = document.getElementById('tableBody');
+                tableBody.innerHTML = ''; // Xóa dữ liệu cũ nếu có
+
+                // Vòng lặp duyệt qua 657 thiết bị để đổ vào bảng HTML
+                data.forEach(item => {
+                    const row = `
+                        <tr>
+                            <td>${item.Ma_thiet_bi || ''}</td>
+                            <td><strong>${item.Ten_thiet_bi || ''}</strong></td>
+                            <td>${item.Noi_dung_tham_dinh || ''}</td>
+                            <td>${item.Thoi_han_cuoi || ''}</td>
+                            <td>${item.Ngay_chuan_bi_de_cuong || ''}</td>
+                            <td>${item.Ngay_thuc_hien_tham_dinh || ''}</td>
+                            <td>${item.Ngay_hoan_thanh_bao_cao || ''}</td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                });
+
+                // Ẩn dòng chữ Loading và hiện bảng dữ liệu lên
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('deviceTable').style.display = 'table';
+
+            } catch (error) {
+                console.error('Lỗi:', error);
+                document.getElementById('loading').innerText = 'Lỗi tải dữ liệu. Hãy chắc chắn bạn đã kích hoạt (Active) workflow trên n8n.';
+            }
+        }
+
+        // Tự động chạy hàm lấy dữ liệu khi trang web được mở
+        loadData();
+    </script>
 </body>
 </html>
