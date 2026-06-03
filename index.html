@@ -3,82 +3,203 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kế Hoạch Thẩm Định Thiết Bị</title>
+    <title>Dashboard Quản Lý Thẩm Định Thiết Bị</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 30px; background-color: #f9f9f9; }
-        h2 { color: #333; text-align: center; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-        th { background-color: #4CAF50; color: white; }
-        tr:nth-child(even) { background-color: #f2f2f2; }
-        tr:hover { background-color: #ddd; }
-        .loading { text-align: center; font-weight: bold; color: #666; margin-top: 20px; }
+        :root {
+            --primary-color: #2e7d32;
+            --bg-color: #f4f6f9;
+            --card-shadow: 0 4px 6px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.1);
+        }
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 20px; background-color: var(--bg-color); color: #333; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        h2 { text-align: center; color: #1b5e20; margin-bottom: 25px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
+        
+        /* Bộ đếm thống kê */
+        .stats-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: white; padding: 15px 20px; border-radius: 8px; box-shadow: var(--card-shadow); border-left: 5px solid var(--primary-color); }
+        .stat-card.warning { border-left-color: #f57c00; }
+        .stat-card.danger { border-left-color: #d32f2f; }
+        .stat-title { font-size: 0.85rem; color: #777; text-transform: uppercase; font-weight: bold; }
+        .stat-value { font-size: 1.8rem; font-weight: bold; color: #222; margin-top: 5px; }
+
+        /* Thanh công cụ tương tác */
+        .toolbar { background: white; padding: 15px; border-radius: 8px; box-shadow: var(--card-shadow); margin-bottom: 20px; display: flex; gap: 15px; flex-wrap: wrap; align-items: center; }
+        .search-box { flex: 1; min-width: 280px; position: relative; }
+        .search-box input { width: 100%; padding: 10px 15px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; box-sizing: border-box; outline: none; transition: 0.2s; }
+        .search-box input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.15); }
+        .filter-box select { padding: 10px 15px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; background: white; outline: none; cursor: pointer; }
+        .filter-box select:focus { border-color: var(--primary-color); }
+
+        /* Bảng dữ liệu */
+        .table-responsive { background: white; border-radius: 8px; box-shadow: var(--card-shadow); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem; }
+        th, td { padding: 12px 15px; border-bottom: 1px solid #eee; }
+        th { background-color: var(--primary-color); color: white; font-weight: 600; position: sticky; top: 0; }
+        tr:hover { background-color: #f8f9fa; }
+        
+        /* Badge Trạng thái */
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; display: inline-block; }
+        .badge-danger { background-color: #ffebee; color: #c62828; }
+        .badge-success { background-color: #e8f5e9; color: #2e7d32; }
+
+        .loading { text-align: center; font-weight: bold; color: #666; padding: 4px 0; font-size: 1.1rem; }
     </style>
 </head>
 <body>
 
-    <h2>DANH SÁCH KẾ HOẠCH THẨM ĐỊNH THIẾT BỊ HỆ THỐNG</h2>
+<div class="container">
+    <h2>Hệ Thống Quản Lý Kế Hoạch Thẩm Định Thiết Bị</h2>
     
-    <div id="loading" class="loading">Đang tải dữ liệu từ hệ thống n8n...</div>
+    <!-- Khung Thống Kê Nhanh -->
+    <div class="stats-container">
+        <div class="stat-card">
+            <div class="stat-title">Tổng số thiết bị</div>
+            <div class="stat-value" id="total-count">0</div>
+        </div>
+        <div class="stat-card warning">
+            <div class="stat-title">Đã phân công lịch</div>
+            <div class="stat-value" id="assigned-count">0</div>
+        </div>
+        <div class="stat-card danger">
+            <div class="stat-title">Chưa phân công</div>
+            <div class="stat-value" id="unassigned-count">0</div>
+        </div>
+    </div>
+
+    <!-- Thanh Tìm Kiếm & Bộ Lọc -->
+    <div class="toolbar">
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="🔍 Nhập mã, tên thiết bị hoặc nội dung thẩm định để tìm..." oninput="filterData()">
+        </div>
+        <div class="filter-box">
+            <select id="statusFilter" onchange="filterData()">
+                <option value="all">-- Tất cả trạng thái --</option>
+                <option value="assigned">Đã phân công lịch</option>
+                <option value="unassigned">Chưa phân công</option>
+            </select>
+        </div>
+    </div>
     
-    <table id="deviceTable" style="display: none;">
-        <thead>
-            <tr>
-                <th>Mã Thiết Bị</th>
-                <th>Tên Thiết Bị / Đường Ống</th>
-                <th>Nội Dung Thẩm Định</th>
-                <th>Hạn Cuối</th>
-                <th>Chuẩn Bị Đề Cương (Trước 1 Tháng)</th>
-                <th>Thực Hiện Thẩm Định (Trước 20 Ngày)</th>
-                <th>Hoàn Thành Báo Cáo (Trước 5 Days)</th>
-            </tr>
-        </thead>
-        <tbody id="tableBody">
-            </tbody>
-    </table>
+    <div id="loading" class="loading">⏳ Đang đồng bộ dữ liệu thời gian thực từ n8n...</div>
+    
+    <!-- Bảng hiển thị dữ liệu -->
+    <div class="table-responsive" id="tableContainer" style="display: none;">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 100px;">Mã Thiết Bị</th>
+                    <th>Tên Thiết Bị / Đường Ống</th>
+                    <th>Nội Dung Thẩm Định</th>
+                    <th style="width: 110px;">Hạn Cuối</th>
+                    <th>Chuẩn Bị Đề Cương<br><small>(Trước 1 Tháng)</small></th>
+                    <th>Thực Hiện Thẩm Định<br><small>(Trước 20 Ngày)</small></th>
+                    <th>Hoàn Thành Báo Cáo<br><small>(Trước 5 Ngày)</small></th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+</div>
 
-    <script>
-        // THAY ĐƯỜNG LINK PRODUCTION URL BẠN COPY Ở BƯỚC 1 VÀO ĐÂY
-        const webhookUrl = 'https://n8n.cpc1hn.com/webhook/ec6f3126-f0eb-4364-a9a3-b3980378beee';
+<script>
+    // Link Production URL từ n8n của bạn
+    const webhookUrl = 'https://n8n.cpc1hn.com/webhook/ec6f3126-f0eb-4364-a9a3-b3980378beee';
+    let localData = []; // Lưu trữ dữ liệu gốc phục vụ việc lọc dữ liệu nhanh hơn
 
-        async function loadData() {
-            try {
-                const response = await fetch(webhookUrl);
-                if (!response.ok) throw new Error('Không thể kết nối với n8n');
-                
-                const data = await response.all ? await response.json() : await response.json();
-                
-                const tableBody = document.getElementById('tableBody');
-                tableBody.innerHTML = ''; // Xóa dữ liệu cũ nếu có
+    async function fetchData() {
+        try {
+            const response = await fetch(webhookUrl);
+            if (!response.ok) throw new Error('Kết nối n8n thất bại');
+            
+            localData = await response.json();
+            
+            // Tính toán nhanh số liệu thống kê ban đầu
+            calculateStats(localData);
+            
+            // Đổ dữ liệu ra bảng
+            renderTable(localData);
 
-                // Vòng lặp duyệt qua 657 thiết bị để đổ vào bảng HTML
-                data.forEach(item => {
-                    const row = `
-                        <tr>
-                            <td>${item.Ma_thiet_bi || ''}</td>
-                            <td><strong>${item.Ten_thiet_bi || ''}</strong></td>
-                            <td>${item.Noi_dung_tham_dinh || ''}</td>
-                            <td>${item.Thoi_han_cuoi || ''}</td>
-                            <td>${item.Ngay_chuan_bi_de_cuong || ''}</td>
-                            <td>${item.Ngay_thuc_hien_tham_dinh || ''}</td>
-                            <td>${item.Ngay_hoan_thanh_bao_cao || ''}</td>
-                        </tr>
-                    `;
-                    tableBody.innerHTML += row;
-                });
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('tableContainer').style.display = 'block';
+        } catch (error) {
+            console.error('Lỗi:', error);
+            document.getElementById('loading').innerText = '❌ Không thể tải dữ liệu. Vui lòng kiểm tra lại trạng thái Workflow trên n8n.';
+        }
+    }
 
-                // Ẩn dòng chữ Loading và hiện bảng dữ liệu lên
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('deviceTable').style.display = 'table';
+    function calculateStats(data) {
+        const total = data.length;
+        const unassigned = data.filter(item => 
+            !item.Thoi_han_cuoi || 
+            item.Thoi_han_cuoi === 'Trống' || 
+            item.Ngay_chuan_bi_de_cuong === 'CHƯA PHÂN CÔNG'
+        ).length;
+        const assigned = total - unassigned;
 
-            } catch (error) {
-                console.error('Lỗi:', error);
-                document.getElementById('loading').innerText = 'Lỗi tải dữ liệu. Hãy chắc chắn bạn đã kích hoạt (Active) workflow trên n8n.';
-            }
+        document.getElementById('total-count').innerText = total;
+        document.getElementById('assigned-count').innerText = assigned;
+        document.getElementById('unassigned-count').innerText = unassigned;
+    }
+
+    function renderTable(data) {
+        const tableBody = document.getElementById('tableBody');
+        tableBody.innerHTML = '';
+
+        if(data.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#888; padding: 30px;">Không tìm thấy dữ liệu phù hợp với bộ lọc!</td></tr>`;
+            return;
         }
 
-        // Tự động chạy hàm lấy dữ liệu khi trang web được mở
-        loadData();
-    </script>
+        data.forEach(item => {
+            // Định dạng đẹp cho ô "CHƯA PHÂN CÔNG"
+            const formatCell = (val) => {
+                if (!val || val === 'CHƯA PHÂN CÔNG' || val === 'Trống') {
+                    return `<span class="badge badge-danger">Chưa phân công</span>`;
+                }
+                return `<strong>${val}</strong>`;
+            };
+
+            const row = `
+                <tr>
+                    <td><small>${item.Ma_thiet_bi || ''}</small></td>
+                    <td><strong>${item.Ten_thiet_bi || ''}</strong></td>
+                    <td><small>${item.Noi_dung_tham_dinh || ''}</small></td>
+                    <td>${item.Thoi_han_cuoi === 'Trống' ? '<span class="badge badge-danger">Chưa có</span>' : item.Thoi_han_cuoi}</td>
+                    <td>${formatCell(item.Ngay_chuan_bi_de_cuong)}</td>
+                    <td>${formatCell(item.Ngay_thuc_hien_tham_dinh)}</td>
+                    <td>${formatCell(item.Ngay_hoan_thanh_bao_cao)}</td>
+                </tr>
+            `;
+            tableBody.innerHTML += row;
+        });
+    }
+
+    // Hàm xử lý tương tác lọc dữ liệu trực tiếp bằng JavaScript siêu tốc
+    function filterData() {
+        const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
+        const statusVal = document.getElementById('statusFilter').value;
+
+        const filtered = localData.filter(item => {
+            // Kiếm tra điều kiện tìm kiếm cụm từ gõ vào
+            const matchSearch = 
+                (item.Ten_thiet_bi && item.Ten_thiet_bi.toLowerCase().includes(searchVal)) ||
+                (item.Ma_thiet_bi && item.Ma_thiet_bi.toLowerCase().includes(searchVal)) ||
+                (item.Noi_dung_tham_dinh && item.Noi_dung_tham_dinh.toLowerCase().includes(searchVal));
+
+            // Kiểm tra điều kiện Trạng thái select dropdown
+            const isUnassigned = !item.Thoi_han_cuoi || item.Thoi_han_cuoi === 'Trống' || item.Ngay_chuan_bi_de_cuong === 'CHƯA PHÂN CÔNG';
+            let matchStatus = true;
+            if (statusVal === 'assigned') matchStatus = !isUnassigned;
+            if (statusVal === 'unassigned') matchStatus = isUnassigned;
+
+            return matchSearch && matchStatus;
+        });
+
+        renderTable(filtered);
+    }
+
+    // Tự động kích hoạt lấy dữ liệu khi tải trang
+    fetchData();
+</script>
 </body>
 </html>
