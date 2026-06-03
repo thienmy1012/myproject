@@ -1,0 +1,11 @@
+async function submitForm() {
+  const name = document.getElementById('name').value;
+
+  await fetch('https://n8n.cpc1hn.com/webhook/ec6f3126-f0eb-4364-a9a3-b3980378beee', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: name })
+  });
+
+  alert('Đã gửi thành công!');
+}
