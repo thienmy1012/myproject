@@ -472,7 +472,7 @@ async function loadTasks(){
     showToast('Không kết nối được n8n — đang dùng dữ liệu mẫu','info');
     buildDropdowns();
   }
-  updateStats(); render();
+  render(); // render() gọi updateStats() bên trong
   btn.classList.remove('spinning');
 }
 
@@ -503,11 +503,13 @@ function demo(){
 }
 
 // ── STATS ─────────────────────────────────────────
-function updateStats(){
+function updateStats(list){
+  // If list provided, show filtered stats; otherwise show all
+  const src = list || tasks;
   const now=new Date(); now.setHours(0,0,0,0);
   const in30=new Date(now); in30.setDate(in30.getDate()+30);
   let soon=0,over=0,done=0;
-  tasks.forEach(t=>{
+  src.forEach(t=>{
     if(t.Trang_thai==='done'){done++;return;}
     const dlRaw=t.Thoi_han_cuoi||'';
     if(!dlRaw||dlRaw==='Trống'||dlRaw.includes('CHƯA')) return;
@@ -516,7 +518,7 @@ function updateStats(){
     if(dl<now) over++;
     else if(dl<=in30) soon++;
   });
-  document.getElementById('s-total').textContent=tasks.length;
+  document.getElementById('s-total').textContent=src.length;
   document.getElementById('s-soon').textContent=soon;
   document.getElementById('s-over').textContent=over;
   document.getElementById('s-done').textContent=done;
@@ -572,6 +574,8 @@ function render(){
     return true;
   });
 
+  // Update stats to reflect filtered list
+  updateStats(list);
   document.getElementById('tbl-count').textContent = list.length+' công việc';
   const tbody=document.getElementById('tbody');
   if(!list.length){ tbody.innerHTML='<tr class="empty-row"><td colspan="7">Không tìm thấy công việc nào</td></tr>'; return; }
@@ -707,7 +711,7 @@ async function confirmUpdate(){
 
   // Cập nhật local
   pendingTask.Trang_thai=pendingStatus;
-  updateStats(); render();
+  render(); // render() gọi updateStats() bên trong
   btn.disabled=false; btn.textContent='Xác nhận';
   closeModal();
 }
@@ -729,9 +733,22 @@ function showToast(msg,type='info'){
 const STATUS_LABELS = { todo:'Chờ xử lý', doing:'Đang làm', done:'Hoàn thành', overdue:'Quá hạn' };
 
 function splitVals(str){
-  // Tách nhiều người trong 1 ô: dấu phẩy, chấm phẩy, xuống dòng
+  // Tách nhiều người: dấu phẩy, chấm phẩy, xuống dòng, dấu gạch ngang giữa tên
   if(!str) return [];
-  return str.split(/[,;\n]+/).map(s=>s.trim()).filter(s=>s && s!=='Chưa phân công' && s!=='Chưa có' && s!=='Trống' && s!=='CHƯA PHÂN CÔNG');
+  const SKIP=['Chưa phân công','Chưa có','Trống','CHƯA PHÂN CÔNG','chưa phân công',''];
+  // First split by comma/semicolon/newline
+  let parts = str.split(/[,;\n]+/).map(s=>s.trim()).filter(s=>s);
+  // Then split each part by dash only if it looks like multiple names (both sides capitalized)
+  let result=[];
+  parts.forEach(p=>{
+    if(/^[A-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠƯẠ-ỴẦẰẨẮẤẪẶẬẮẼẸẺẼẸẾỀỂỄỆỈỊỌỎỐỒỔỖỘỢỚỜỞỠỤỦỨỪỰỬỮ][a-zàáâãèéêìíòóôõùúăđĩũơưạ-ỵầằẩắấẫặậắẽẹẻẽẹếềểễệỉịọỏốồổỗộợớờởỡụủứừựửữ]+-[A-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠƯẠ-ỴẦẰẨẮẤẪẶẬẮẼẸẺẼẸẾỀỂỄỆỈỊỌỎỐỒỔỖỘỢỚỜỞỠỤỦỨỪỰỬỮ]/.test(p)){
+      // Looks like "Hương-My" → split on dash
+      p.split('-').forEach(n=>{ const t=n.trim(); if(t) result.push(t); });
+    } else {
+      result.push(p);
+    }
+  });
+  return result.filter(s=>!SKIP.includes(s));
 }
 
 function buildDropdowns(){
