@@ -30,7 +30,6 @@
   --radius-sm: 8px;
   --font: 'Be Vietnam Pro', sans-serif;
   --mono: 'JetBrains Mono', monospace;
-  --webhook: 'https://n8n.cpc1hn.com/webhook/ec6f3126-f0eb-4364-a9a3-b3980378beee';
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -390,7 +389,7 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 }
 
 /* ACTION BUTTONS */
-.action-row { display: flex; gap: 6px; align-items: center; }
+.action-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .btn-action {
   background: var(--bg3);
   border: 1px solid var(--border);
@@ -404,13 +403,15 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   white-space: nowrap;
 }
 .btn-action:hover { border-color: var(--border2); color: var(--text); }
+.btn-action.todo   { color: var(--text2); border-color: rgba(255,255,255,0.15); }
+.btn-action.todo:hover:not(:disabled) { background: rgba(255,255,255,0.05); color: #fff; }
 .btn-action.doing  { color: var(--amber); border-color: rgba(245,166,35,0.3); }
-.btn-action.doing:hover { background: var(--amber-bg); }
+.btn-action.doing:hover:not(:disabled) { background: var(--amber-bg); }
 .btn-action.done   { color: var(--green); border-color: rgba(52,210,152,0.3); }
-.btn-action.done:hover { background: var(--green-bg); }
+.btn-action.done:hover:not(:disabled) { background: var(--green-bg); }
 .btn-action.report { color: var(--purple); border-color: rgba(167,139,250,0.3); }
-.btn-action.report:hover { background: var(--purple-bg); }
-.btn-action:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-action.report:hover:not(:disabled) { background: var(--purple-bg); }
+.btn-action:disabled { opacity: 0.3; cursor: not-allowed; border-color: transparent; }
 
 /* DAYS LEFT CHIP */
 .days-chip {
@@ -678,10 +679,10 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 const WEBHOOK = 'https://n8n.cpc1hn.com/webhook/ec6f3126-f0eb-4364-a9a3-b3980378beee';
 
 // ── USER ACCOUNTS (lưu trong JS, thêm tài khoản tại đây) ──
-// Định dạng: { email, password, name, role: 'admin'|'user' }
 const USERS = [
   { email: 'mytnt.qa@cpc1hn.com',  password: 'cpc1hn@2025', name: 'My TNT',   role: 'user' },
   { email: 'nhiph.qa@cpc1hn.com',  password: 'cpc1hn@2025', name: 'Nhi PH',   role: 'user' },
+  { email: 'admin@cpc1hn.com',     password: 'admin',       name: 'Admin',    role: 'admin' },
 ];
 
 let currentUser = null;
@@ -756,11 +757,10 @@ async function loadTasks() {
       body: JSON.stringify({ action: 'get_tasks', user: currentUser.email, role: currentUser.role })
     });
     const data = await res.json();
-
-    // Hỗ trợ cả mảng trực tiếp và object { tasks: [...] }
+    
+    // Hỗ trợ cấu trúc trả về đa dạng từ n8n
     allTasks = Array.isArray(data) ? data : (data.tasks || data.data || []);
 
-    // Nếu n8n chưa xây xong workflow, dùng dữ liệu mẫu
     if (!allTasks.length) allTasks = getSampleData();
 
     updateStats();
@@ -776,7 +776,7 @@ async function loadTasks() {
   btn.classList.remove('spinning');
 }
 
-// ── SAMPLE DATA (dùng khi chưa có n8n) ──
+// ── SAMPLE DATA (dùng khi n8n chưa cấu trúc xong) ──
 function getSampleData() {
   const today = new Date();
   const d = (offset) => {
@@ -784,12 +784,10 @@ function getSampleData() {
     return dt.toISOString().split('T')[0];
   };
   return [
-    { id:1, task:'Thẩm định dự án Đường dây 110kV Tân Bình', owner:'nguyen@cpc1hn.com', ownerName:'Nguyễn Văn A', deadline: d(45), prepareDoc: d(15), fieldCheck: d(25), finalReport: d(40), status:'doing', quarter:'Q3/2025' },
-    { id:2, task:'Báo cáo quyết toán TBA 110kV Long Biên', owner:'tran@cpc1hn.com', ownerName:'Trần Thị B', deadline: d(20), prepareDoc: d(-10), fieldCheck: d(0), finalReport: d(15), status:'doing', quarter:'Q3/2025' },
-    { id:3, task:'Thẩm định TBA 220kV Hà Đông mở rộng', owner:'le@cpc1hn.com', ownerName:'Lê Minh C', deadline: d(-5), prepareDoc: d(-35), fieldCheck: d(-25), finalReport: d(-10), status:'todo', quarter:'Q3/2025' },
-    { id:4, task:'Kiểm tra hiện trạng Đường dây 35kV Cầu Giấy', owner:'pham@cpc1hn.com', ownerName:'Phạm Thị D', deadline: d(60), prepareDoc: d(30), fieldCheck: d(40), finalReport: d(55), status:'todo', quarter:'Q4/2025' },
-    { id:5, task:'Thẩm định dự án Cáp ngầm 22kV Hoàn Kiếm', owner:'nguyen@cpc1hn.com', ownerName:'Nguyễn Văn A', deadline: d(10), prepareDoc: d(-20), fieldCheck: d(-10), finalReport: d(5), status:'doing', quarter:'Q3/2025' },
-    { id:6, task:'Nghiệm thu TBA 110kV Sóc Sơn 2', owner:'tran@cpc1hn.com', ownerName:'Trần Thị B', deadline: d(-15), prepareDoc: d(-45), fieldCheck: d(-35), finalReport: d(-20), status:'done', quarter:'Q3/2025' },
+    { id:1, task:'Thẩm định dự án Đường dây 110kV Tân Bình', owner:'mytnt.qa@cpc1hn.com', ownerName:'My TNT', deadline: d(45), prepareDoc: d(15), fieldCheck: d(25), finalReport: d(40), status:'doing', quarter:'Q3/2025' },
+    { id:2, task:'Báo cáo quyết toán TBA 110kV Long Biên', owner:'nhiph.qa@cpc1hn.com', ownerName:'Nhi PH', deadline: d(20), prepareDoc: d(-10), fieldCheck: d(0), finalReport: d(15), status:'todo', quarter:'Q3/2025' },
+    { id:3, task:'Kiểm tra quy trình sản xuất lô 12B', owner:'mytnt.qa@cpc1hn.com', ownerName:'My TNT', deadline: d(-5), prepareDoc: d(-35), fieldCheck: d(-25), finalReport: d(-10), status:'todo', quarter:'Q3/2025' },
+    { id:4, task:'Đánh giá chất lượng định kỳ tháng 8', owner:'pham@cpc1hn.com', ownerName:'Phạm Thị D', deadline: d(60), prepareDoc: d(30), fieldCheck: d(40), finalReport: d(55), status:'todo', quarter:'Q4/2025' }
   ];
 }
 
@@ -830,8 +828,11 @@ function renderTable() {
       (t.ownerName||'').toLowerCase().includes(search) ||
       (t.owner||'').toLowerCase().includes(search);
     if (!matchSearch) return false;
+    
+    // Kiểm tra owner theo email hoặc tên hiển thị cho chắc chắn
+    const isOwnerMatch = t.owner === currentUser.email || t.ownerName === currentUser.name;
     const dl = new Date(t.deadline);
-    if (currentFilter === 'mine')   return t.owner === currentUser.email;
+    if (currentFilter === 'mine')   return isOwnerMatch;
     if (currentFilter === 'overdue') return t.status !== 'done' && dl < today;
     if (currentFilter === 'soon')   return t.status !== 'done' && dl >= today && dl <= in30;
     if (currentFilter === 'done')   return t.status === 'done';
@@ -849,14 +850,16 @@ function renderTable() {
   tbody.innerHTML = tasks.map(t => {
     const dl = new Date(t.deadline);
     const daysLeft = Math.round((dl - today) / 86400000);
-    const isOwner = t.owner === currentUser.email || currentUser.role === 'admin';
+    // Kiểm tra owner cho phép sửa (admin hoặc Tên/Email đúng của mình)
+    const isOwner = t.owner === currentUser.email || t.ownerName === currentUser.name || currentUser.role === 'admin';
     const isOverdue = t.status !== 'done' && daysLeft < 0;
 
-    // Status
-    let statusBadge, effectiveStatus = t.status;
-    if (isOverdue && t.status !== 'done') effectiveStatus = 'overdue';
+    // Status mapping
+    let statusBadge, effectiveStatus = t.status || 'todo';
+    if (isOverdue && effectiveStatus !== 'done') effectiveStatus = 'overdue';
+    
     const statusMap = {
-      todo:    '<span class="badge todo">Chưa làm</span>',
+      todo:    '<span class="badge todo">Chờ xử lý</span>',
       doing:   '<span class="badge doing">Đang làm</span>',
       done:    '<span class="badge done">Hoàn thành</span>',
       overdue: '<span class="badge overdue">Quá hạn</span>',
@@ -896,22 +899,23 @@ function renderTable() {
         <div class="tl-item"><span class="tl-label">📄 Báo cáo: </span>${fmtDate(t.finalReport)}</div>
       </div>`;
 
-    // Actions (chỉ owner mới bấm được)
+    // ── THAO TÁC CỦA NGƯỜI DÙNG CHÍNH ──
     let actions;
     if (!isOwner) {
-      actions = '<span style="color:var(--text3);font-size:11px">Chỉ xem</span>';
-    } else if (t.status === 'done') {
-      actions = '<span style="color:var(--green);font-size:11px">✓ Đã hoàn thành</span>';
+      actions = '<span style="color:var(--text3);font-size:11px">🔒 Chỉ xem</span>';
     } else {
+      // 3 Nút tương tác trạng thái linh hoạt + Nút Báo Cáo
       actions = `
         <div class="action-row">
+          <button class="btn-action todo" onclick="updateStatus(${t.id},'todo')" ${t.status==='todo' || !t.status ?'disabled':''}>Chờ xử lý</button>
           <button class="btn-action doing" onclick="updateStatus(${t.id},'doing')" ${t.status==='doing'?'disabled':''}>Đang làm</button>
-          <button class="btn-action done"  onclick="updateStatus(${t.id},'done')">Hoàn thành</button>
+          <button class="btn-action done"  onclick="updateStatus(${t.id},'done')" ${t.status==='done'?'disabled':''}>Hoàn thành</button>
           <button class="btn-action report" onclick="openReport(${t.id})">Báo cáo</button>
         </div>`;
     }
 
-    const ownerTag = t.owner === currentUser.email ? '<span class="task-my">Của tôi</span>' : '';
+    const ownerTag = (t.owner === currentUser.email || t.ownerName === currentUser.name) 
+      ? '<span class="task-my">Của tôi</span>' : '';
 
     return `<tr>
       <td><div class="task-name">${t.task}${ownerTag}</div></td>
@@ -925,7 +929,7 @@ function renderTable() {
   }).join('');
 }
 
-// ── UPDATE STATUS ──
+// ── UPDATE STATUS (GỬI ĐẾN n8n) ──
 async function updateStatus(taskId, newStatus) {
   const task = allTasks.find(t => t.id === taskId);
   if (!task) return;
@@ -942,12 +946,19 @@ async function updateStatus(taskId, newStatus) {
         timestamp: new Date().toISOString()
       })
     });
-  } catch(e) { /* offline mode */ }
+  } catch(e) { 
+    // Fallback nếu chạy offline
+  }
 
   task.status = newStatus;
   updateStats();
   renderTable();
-  const label = newStatus === 'done' ? 'Đã đánh dấu hoàn thành' : 'Đã cập nhật: Đang làm';
+  
+  let label = 'Đã cập nhật trạng thái';
+  if(newStatus === 'done') label = 'Tuyệt vời! Đã hoàn thành công việc.';
+  if(newStatus === 'doing') label = 'Đã chuyển trạng thái: Đang làm.';
+  if(newStatus === 'todo') label = 'Đã chuyển trạng thái: Chờ xử lý.';
+  
   showToast(label, 'success');
 }
 
