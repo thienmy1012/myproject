@@ -286,15 +286,7 @@ tr:hover td{background:rgba(255,255,255,0.015);}
       </div>
     </div>
 
-    <!-- TABS + FILTER -->
-    <div class="tabs">
-      <button class="tab active" onclick="setTab('all',this)">Tất cả</button>
-      <button class="tab" onclick="setTab('mine',this)">Của tôi</button>
-      <button class="tab" onclick="setTab('overdue',this)">Quá hạn</button>
-      <button class="tab" onclick="setTab('soon',this)">Sắp hạn</button>
-      <button class="tab" onclick="setTab('done',this)">Hoàn thành</button>
-    </div>
-
+    <!-- FILTER -->
     <div class="filter-bar">
       <input type="text" id="search" placeholder="🔍  Tìm tên thiết bị, mã, nội dung..." oninput="render()">
       <!-- Tiến độ -->
@@ -564,10 +556,10 @@ function render(){
       if(effStatus !== filters.status) return false;
     }
     if(filters.qa){
-      if((t.QA_phu_trach||'').trim() !== filters.qa) return false;
+      if(!splitVals(t.QA_phu_trach).includes(filters.qa)) return false;
     }
     if(filters.dept){
-      if((t.Bo_phan_khac||'').trim() !== filters.dept) return false;
+      if(!splitVals(t.Bo_phan_khac).includes(filters.dept)) return false;
     }
     if(filters.month !== null && filters.month !== undefined){
       if(!dl) return false;
@@ -660,12 +652,11 @@ function render(){
 // ── HELPERS ───────────────────────────────────────
 function isMine(t){
   if(!me) return false;
-  const qa=(t.QA_phu_trach||'').toLowerCase().trim();
-  if(!qa || qa==='chưa phân công' || qa==='chưa có' || qa==='trống') return false;
+  const vals=splitVals(t.QA_phu_trach).map(v=>v.toLowerCase());
+  if(!vals.length) return false;
   const myName=me.name.toLowerCase();
   const myEmail=me.email.toLowerCase();
-  // Khớp tên (My, Nhi) hoặc email
-  return qa===myName || qa===myEmail || myEmail.startsWith(qa) || qa.includes(myName);
+  return vals.some(v=> v===myName || v===myEmail || myEmail.startsWith(v) || v.includes(myName));
 }
 function escId(t){ return encodeURIComponent(t.Ma_thiet_bi||t.Ten_thiet_bi||''); }
 function taskById(id){ return tasks.find(t=>encodeURIComponent(t.Ma_thiet_bi||t.Ten_thiet_bi||'')===id); }
@@ -737,15 +728,18 @@ function showToast(msg,type='info'){
 // ── FILTERS ───────────────────────────────────────
 const STATUS_LABELS = { todo:'Chờ xử lý', doing:'Đang làm', done:'Hoàn thành', overdue:'Quá hạn' };
 
+function splitVals(str){
+  // Tách nhiều người trong 1 ô: dấu phẩy, chấm phẩy, xuống dòng
+  if(!str) return [];
+  return str.split(/[,;\n]+/).map(s=>s.trim()).filter(s=>s && s!=='Chưa phân công' && s!=='Chưa có' && s!=='Trống' && s!=='CHƯA PHÂN CÔNG');
+}
+
 function buildDropdowns(){
-  // Collect unique values from tasks
   const qaSet=new Set(), deptSet=new Set(), monthSet=new Set(), yearSet=new Set();
   const now=new Date(); now.setHours(0,0,0,0);
   tasks.forEach(t=>{
-    const qa=(t.QA_phu_trach||'').trim();
-    if(qa && qa!=='Chưa phân công' && qa!=='Chưa có') qaSet.add(qa);
-    const dept=(t.Bo_phan_khac||'').trim();
-    if(dept && dept!=='Chưa phân công' && dept!=='Chưa có') deptSet.add(dept);
+    splitVals(t.QA_phu_trach).forEach(v=>qaSet.add(v));
+    splitVals(t.Bo_phan_khac).forEach(v=>deptSet.add(v));
     const dlRaw=t.Thoi_han_cuoi||'';
     if(dlRaw && dlRaw!=='Trống' && !dlRaw.includes('CHƯA')){
       const d=new Date(dlRaw);
@@ -757,11 +751,13 @@ function buildDropdowns(){
   });
 
   // Build status dropdown
-  buildDrop('status',
-    [{val:null,label:'Tất cả tiến độ'},'todo','doing','overdue','done'].map(v=>
-      v===null||typeof v==='object'?v:{val:v,label:STATUS_LABELS[v]||v}
-    )
-  );
+  buildDrop('status',[
+    {val:null,label:'Tất cả tiến độ'},
+    {val:'todo',label:'Chờ xử lý'},
+    {val:'doing',label:'Đang làm'},
+    {val:'overdue',label:'Quá hạn'},
+    {val:'done',label:'Hoàn thành'},
+  ]);
 
   // Build QA dropdown
   buildDrop('qa',[{val:null,label:'Tất cả QA'},...[...qaSet].sort().map(v=>({val:v,label:v}))]);
@@ -779,13 +775,23 @@ function buildDropdowns(){
 function buildDrop(key, opts){
   const el=document.getElementById('flt-drop-'+key);
   el.innerHTML=opts.map(o=>{
-    const v=o===null?null:o.val;
-    const l=o===null?'—':o.label;
+    const v=o.val;   // always use o.val (we now always pass objects)
+    const l=o.label;
     const sel=filters[key]===v?'selected':'';
-    const cls=v===null?'flt-opt all-opt '+sel:'flt-opt '+sel;
-    const valStr=v===null?'null':JSON.stringify(v);
-    return `<div class="${cls}" onclick="setFilter('${key}',${valStr},this)">${l}</div>`;
+    const cls=(v===null||v===undefined)?'flt-opt all-opt '+sel:'flt-opt '+sel;
+    // Use data attributes to avoid null/type issues in onclick
+    const dataVal=(v===null||v===undefined)?'__ALL__':String(v);
+    return `<div class="${cls}" data-key="${key}" data-val="${dataVal}" onclick="setFilterFromEl(this)">${l}</div>`;
   }).join('');
+}
+
+function setFilterFromEl(el){
+  const key=el.dataset.key;
+  const raw=el.dataset.val;
+  let val=raw==='__ALL__'?null:raw;
+  // Convert month/year back to numbers
+  if(key==='month'||key==='year') val=val===null?null:parseInt(val);
+  setFilter(key, val, el);
 }
 
 function toggleDropdown(key){
