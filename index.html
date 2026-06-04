@@ -404,11 +404,9 @@ async function loadTasks(){
   document.getElementById('tbody').innerHTML =
     '<tr class="loading-row"><td colspan="7"><div class="spinner-wrap"><div class="spinner"></div>Đang tải từ n8n...</div></td></tr>';
   try{
-    const res = await fetch(WEBHOOK, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ action:'get_tasks', user: me.email, userName: me.name })
-    });
+    // Dùng GET để khớp với n8n
+    const url = WEBHOOK + '?action=get_tasks&user=' + encodeURIComponent(me.email);
+    const res = await fetch(url, { method:'GET' });
     const raw = await res.json();
     // n8n có thể trả mảng trực tiếp hoặc { tasks:[...] } hoặc { data:[...] }
     tasks = Array.isArray(raw) ? raw : (raw.tasks || raw.data || []);
@@ -601,19 +599,16 @@ async function confirmUpdate(){
 
   // Gửi lên n8n
   try{
-    await fetch(WEBHOOK,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        action:'update_status',
-        Ma_thiet_bi: pendingTask.Ma_thiet_bi,
-        Ten_thiet_bi: pendingTask.Ten_thiet_bi,
-        Trang_thai: pendingStatus,
-        user: me.email,
-        userName: me.name,
-        timestamp: new Date().toISOString()
-      })
+    const params = new URLSearchParams({
+      action:'update_status',
+      Ma_thiet_bi: pendingTask.Ma_thiet_bi||'',
+      Ten_thiet_bi: pendingTask.Ten_thiet_bi||'',
+      Trang_thai: pendingStatus,
+      user: me.email,
+      userName: me.name,
+      timestamp: new Date().toISOString()
     });
+    await fetch(WEBHOOK + '?' + params.toString(), { method:'GET' });
     showToast('Đã cập nhật trạng thái thành công','success');
   }catch(e){
     showToast('Lỗi kết nối n8n — trạng thái chỉ cập nhật tạm thời','info');
