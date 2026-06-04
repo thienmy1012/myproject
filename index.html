@@ -539,9 +539,14 @@ function render(){
   const in30=new Date(now); in30.setDate(in30.getDate()+30);
 
   const list = tasks.filter(t=>{
-    const dlR=t.Thoi_han_cuoi||'';
-    const dlV=(!dlR||dlR==='Trống'||dlR.includes('CHƯA')||dlR.includes('Chưa'))?null:new Date(dlR);
-    const dl=dlV&&!isNaN(dlV.getTime())?dlV:null;
+    const dlR=(t.Thoi_han_cuoi||'').trim();
+    let dl=null;
+    if(dlR&&dlR!=='Trống'&&!dlR.includes('CHƯA')&&!dlR.includes('Chưa')){
+      if(/^\d{4}-\d{2}-\d{2}/.test(dlR)){const[y,m,day]=dlR.split('-').map(Number);dl=new Date(y,m-1,day);}
+      else if(dlR.includes('/')){const p=dlR.split('/');if(p.length===3&&p[2].length===4)dl=new Date(Number(p[2]),Number(p[1])-1,Number(p[0]));else dl=new Date(dlR);}
+      else dl=new Date(dlR);
+      if(dl&&isNaN(dl.getTime()))dl=null;
+    }
     const isOver = t.Trang_thai!=='done' && dl && dl<now;
     // Text search
     const match = !q || [t.Ten_thiet_bi,t.Ma_thiet_bi,t.Noi_dung_tham_dinh,t.QA_phu_trach,t.Bo_phan_khac]
@@ -582,10 +587,21 @@ function render(){
 
   tbody.innerHTML = list.map(t=>{
     const now2=new Date(); now2.setHours(0,0,0,0);
-    const dlRaw=t.Thoi_han_cuoi||'';
+    const dlRaw=(t.Thoi_han_cuoi||'').trim();
     const dlEmpty=!dlRaw||dlRaw==='Trống'||dlRaw.includes('CHƯA')||dlRaw.includes('Chưa');
-    const dl=dlEmpty?null:new Date(dlRaw);
-    const dLeft=dl&&!isNaN(dl.getTime())?Math.round((dl-now2)/86400000):null;
+    let dl=null;
+    if(!dlEmpty){
+      if(/^\d{4}-\d{2}-\d{2}/.test(dlRaw)){
+        const [y,m,day]=dlRaw.split('-').map(Number);
+        dl=new Date(y,m-1,day);
+      } else if(dlRaw.includes('/')){
+        const p=dlRaw.split('/');
+        if(p.length===3&&p[2].length===4) dl=new Date(Number(p[2]),Number(p[1])-1,Number(p[0]));
+        else dl=new Date(dlRaw);
+      } else { dl=new Date(dlRaw); }
+      if(dl&&isNaN(dl.getTime())) dl=null;
+    }
+    const dLeft=dl?Math.round((dl-now2)/86400000):null;
     const isOver=t.Trang_thai!=='done'&&dLeft!==null&&dLeft<0;
     const status=isOver?'overdue':t.Trang_thai||'todo';
     const mine=isMine(t);
@@ -603,16 +619,34 @@ function render(){
     const badges={todo:'<span class="badge todo">Chờ xử lý</span>',doing:'<span class="badge doing">Đang làm</span>',done:'<span class="badge done">Hoàn thành</span>',overdue:'<span class="badge overdue">Quá hạn</span>'};
 
     // Date helper
+    const fmtDate=d=>`${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
     const fd=s=>{
       const empty=['','Trống','CHƯA PHÂN CÔNG','Chưa phân công','chưa phân công'];
       if(!s || empty.includes(s.trim())) return '<span class="date-cell date-muted">Chưa có</span>';
-      const dd=new Date(s);
-      if(isNaN(dd.getTime())) return '<span class="date-cell date-muted">'+s+'</span>';
+      // Parse YYYY-MM-DD hoặc DD/MM/YYYY
+      let dd;
+      const sv=s.trim();
+      if(/^\d{4}-\d{2}-\d{2}/.test(sv)){
+        // YYYY-MM-DD: parse trực tiếp tránh timezone shift
+        const [y,m,day]=sv.split('-').map(Number);
+        dd=new Date(y,m-1,day);
+      } else if(sv.includes('/')){
+        const parts=sv.split('/');
+        if(parts.length===3 && parts[2].length===4){
+          // DD/MM/YYYY
+          dd=new Date(Number(parts[2]),Number(parts[1])-1,Number(parts[0]));
+        } else {
+          dd=new Date(sv);
+        }
+      } else {
+        dd=new Date(sv);
+      }
+      if(isNaN(dd.getTime())) return '<span class="date-cell date-muted">'+sv+'</span>';
       const now3=new Date(); now3.setHours(0,0,0,0);
       const diff=Math.round((dd-now3)/86400000);
       let cls='date-cell';
       if(diff<0) cls+=' date-danger'; else if(diff<=7) cls+=' date-warn'; else cls+=' date-ok';
-      return `<span class="${cls}">${dd.toLocaleDateString('vi-VN')}</span>`;
+      return `<span class="${cls}">${fmtDate(dd)}</span>`;
     };
 
     // Milestones
