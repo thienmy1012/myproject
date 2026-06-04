@@ -313,21 +313,12 @@ tr:hover td{background:rgba(255,255,255,0.015);}
         </button>
         <div class="flt-dropdown" id="flt-drop-dept"></div>
       </div>
-      <!-- Tháng -->
-      <div class="flt-wrap">
-        <button class="flt-btn" id="flt-btn-month" onclick="toggleDropdown('month')">
-          <span class="flt-label" id="flt-label-month">Tháng</span>
-          <span class="flt-arrow">▼</span>
-        </button>
-        <div class="flt-dropdown" id="flt-drop-month"></div>
-      </div>
-      <!-- Năm -->
-      <div class="flt-wrap">
-        <button class="flt-btn" id="flt-btn-year" onclick="toggleDropdown('year')">
-          <span class="flt-label" id="flt-label-year">Năm</span>
-          <span class="flt-arrow">▼</span>
-        </button>
-        <div class="flt-dropdown" id="flt-drop-year"></div>
+      <!-- Date range -->
+      <div style="display:flex;align-items:center;gap:6px;">
+        <label style="font-size:11px;color:var(--text3);white-space:nowrap">Từ:</label>
+        <input type="date" id="flt-date-from" onchange="applyDateRange()" style="background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rs);padding:6px 10px;color:var(--text);font-family:var(--font);font-size:12px;outline:none;cursor:pointer;color-scheme:dark;">
+        <label style="font-size:11px;color:var(--text3);white-space:nowrap">Đến:</label>
+        <input type="date" id="flt-date-to" onchange="applyDateRange()" style="background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rs);padding:6px 10px;color:var(--text);font-family:var(--font);font-size:12px;outline:none;cursor:pointer;color-scheme:dark;">
       </div>
       <button class="flt-clear" id="flt-clear-all" onclick="clearAllFilters()" style="display:none">✕ Xóa lọc</button>
     </div>
@@ -407,7 +398,7 @@ const USERS = [
 
 let me = null, tasks = [], tab = 'all', pendingTask = null, pendingStatus = null;
 // Active filters
-let filters = { status: null, qa: null, dept: null, month: null, year: null };
+let filters = { status: null, qa: null, dept: null, dateFrom: null, dateTo: null };
 
 // ── AUTH ──────────────────────────────────────────
 function initSession(){
@@ -568,13 +559,15 @@ function render(){
     if(filters.dept){
       if(!splitVals(t.Bo_phan_khac).includes(filters.dept)) return false;
     }
-    if(filters.month !== null && filters.month !== undefined){
+    if(filters.dateFrom){
       if(!dl) return false;
-      if(dl.getMonth()+1 !== filters.month) return false;
+      if(dl < filters.dateFrom) return false;
     }
-    if(filters.year !== null && filters.year !== undefined){
+    if(filters.dateTo){
       if(!dl) return false;
-      if(dl.getFullYear() !== filters.year) return false;
+      // Include the entire "to" day
+      const toEnd=new Date(filters.dateTo); toEnd.setHours(23,59,59,999);
+      if(dl > toEnd) return false;
     }
     return true;
   });
@@ -786,19 +779,12 @@ function splitVals(str){
 }
 
 function buildDropdowns(){
-  const qaSet=new Set(), deptSet=new Set(), monthSet=new Set(), yearSet=new Set();
+  const qaSet=new Set(), deptSet=new Set();
   const now=new Date(); now.setHours(0,0,0,0);
   tasks.forEach(t=>{
     splitVals(t.QA_phu_trach).forEach(v=>qaSet.add(v));
     splitVals(t.Bo_phan_khac).forEach(v=>deptSet.add(v));
-    const dlRaw=t.Thoi_han_cuoi||'';
-    if(dlRaw && dlRaw!=='Trống' && !dlRaw.includes('CHƯA')){
-      const d=new Date(dlRaw);
-      if(!isNaN(d.getTime())){
-        monthSet.add(d.getMonth()+1);
-        yearSet.add(d.getFullYear());
-      }
-    }
+    // date range handled by inputs, no need to collect months/years
   });
 
   // Build status dropdown
@@ -816,11 +802,7 @@ function buildDropdowns(){
   // Build dept dropdown
   buildDrop('dept',[{val:null,label:'Tất cả bộ phận'},...[...deptSet].sort().map(v=>({val:v,label:v}))]);
 
-  // Build month dropdown
-  buildDrop('month',[{val:null,label:'Tất cả tháng'},...[...monthSet].sort((a,b)=>a-b).map(v=>({val:v,label:'Tháng '+v}))]);
-
-  // Build year dropdown
-  buildDrop('year',[{val:null,label:'Tất cả năm'},...[...yearSet].sort().map(v=>({val:v,label:'Năm '+v}))]);
+  // month/year replaced by date range inputs
 }
 
 function buildDrop(key, opts){
@@ -834,6 +816,17 @@ function buildDrop(key, opts){
     const dataVal=(v===null||v===undefined)?'__ALL__':String(v);
     return `<div class="${cls}" data-key="${key}" data-val="${dataVal}" onclick="setFilterFromEl(this)">${l}</div>`;
   }).join('');
+}
+
+function applyDateRange(){
+  const from=document.getElementById('flt-date-from').value;
+  const to=document.getElementById('flt-date-to').value;
+  filters.dateFrom=from?new Date(from):null;
+  filters.dateTo=to?new Date(to):null;
+  // Show/hide clear button
+  const anyActive=Object.values(filters).some(v=>v!==null);
+  document.getElementById('flt-clear-all').style.display=anyActive?'':'none';
+  render();
 }
 
 function setFilterFromEl(el){
@@ -868,15 +861,13 @@ function setFilter(key, val, el){
   // Update button label
   const labelEl=document.getElementById('flt-label-'+key);
   const btn=document.getElementById('flt-btn-'+key);
-  const defaultLabels={status:'Tiến độ',qa:'QA phụ trách',dept:'Bộ phận khác',month:'Tháng',year:'Năm'};
+  const defaultLabels={status:'Tiến độ',qa:'QA phụ trách',dept:'Bộ phận khác'};
   if(val===null){
-    labelEl.textContent=defaultLabels[key];
+    labelEl.textContent=defaultLabels[key]||key;
     btn.classList.remove('active');
   } else {
     let displayVal=val;
     if(key==='status') displayVal=STATUS_LABELS[val]||val;
-    if(key==='month') displayVal='Tháng '+val;
-    if(key==='year') displayVal='Năm '+val;
     labelEl.textContent=displayVal;
     btn.classList.add('active');
   }
@@ -892,12 +883,14 @@ function setFilter(key, val, el){
 }
 
 function clearAllFilters(){
-  filters={status:null,qa:null,dept:null,month:null,year:null};
-  ['status','qa','dept','month','year'].forEach(k=>{
-    const defaultLabels={status:'Tiến độ',qa:'QA phụ trách',dept:'Bộ phận khác',month:'Tháng',year:'Năm'};
+  filters={status:null,qa:null,dept:null,dateFrom:null,dateTo:null};
+  ['status','qa','dept'].forEach(k=>{
+    const defaultLabels={status:'Tiến độ',qa:'QA phụ trách',dept:'Bộ phận khác'};
     document.getElementById('flt-label-'+k).textContent=defaultLabels[k];
     document.getElementById('flt-btn-'+k).classList.remove('active');
   });
+  document.getElementById('flt-date-from').value='';
+  document.getElementById('flt-date-to').value='';
   document.getElementById('flt-clear-all').style.display='none';
   buildDropdowns();
   render();
