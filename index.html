@@ -456,7 +456,10 @@ function updateStats(){
   let soon=0,over=0,done=0;
   tasks.forEach(t=>{
     if(t.Trang_thai==='done'){done++;return;}
-    const dl=new Date(t.Thoi_han_cuoi);
+    const dlRaw=t.Thoi_han_cuoi||'';
+    if(!dlRaw||dlRaw==='Trống'||dlRaw.includes('CHƯA')) return;
+    const dl=new Date(dlRaw);
+    if(isNaN(dl.getTime())) return;
     if(dl<now) over++;
     else if(dl<=in30) soon++;
   });
@@ -481,14 +484,16 @@ function render(){
   const in30=new Date(now); in30.setDate(in30.getDate()+30);
 
   const list = tasks.filter(t=>{
-    const dl=new Date(t.Thoi_han_cuoi);
-    const isOver = t.Trang_thai!=='done' && dl<now;
+    const dlR=t.Thoi_han_cuoi||'';
+    const dlV=(!dlR||dlR==='Trống'||dlR.includes('CHƯA')||dlR.includes('Chưa'))?null:new Date(dlR);
+    const dl=dlV&&!isNaN(dlV.getTime())?dlV:null;
+    const isOver = t.Trang_thai!=='done' && dl && dl<now;
     const match = !q || [t.Ten_thiet_bi,t.Ma_thiet_bi,t.Noi_dung_tham_dinh,t.QA_phu_trach,t.Bo_phan_khac]
       .some(v=>(v||'').toLowerCase().includes(q));
     if(!match) return false;
     if(tab==='mine')    return isMine(t);
     if(tab==='overdue') return isOver;
-    if(tab==='soon')    return !isOver && dl>=now && dl<=in30 && t.Trang_thai!=='done';
+    if(tab==='soon')    return !isOver && dl && dl>=now && dl<=in30 && t.Trang_thai!=='done';
     if(tab==='done')    return t.Trang_thai==='done';
     return true;
   });
@@ -499,27 +504,33 @@ function render(){
 
   tbody.innerHTML = list.map(t=>{
     const now2=new Date(); now2.setHours(0,0,0,0);
-    const dl=new Date(t.Thoi_han_cuoi);
-    const dLeft=Math.round((dl-now2)/86400000);
-    const isOver=t.Trang_thai!=='done'&&dLeft<0;
+    const dlRaw=t.Thoi_han_cuoi||'';
+    const dlEmpty=!dlRaw||dlRaw==='Trống'||dlRaw.includes('CHƯA')||dlRaw.includes('Chưa');
+    const dl=dlEmpty?null:new Date(dlRaw);
+    const dLeft=dl&&!isNaN(dl.getTime())?Math.round((dl-now2)/86400000):null;
+    const isOver=t.Trang_thai!=='done'&&dLeft!==null&&dLeft<0;
     const status=isOver?'overdue':t.Trang_thai||'todo';
     const mine=isMine(t);
 
     // Days chip
     let chip;
-    if(t.Trang_thai==='done') chip='<span class="chip done">✓ Xong</span>';
-    else if(dLeft<0)          chip=`<span class="chip danger">QH ${Math.abs(dLeft)}n</span>`;
-    else if(dLeft<=7)         chip=`<span class="chip danger">${dLeft} ngày</span>`;
-    else if(dLeft<=30)        chip=`<span class="chip warn">${dLeft} ngày</span>`;
-    else                      chip=`<span class="chip ok">${dLeft} ngày</span>`;
+    if(t.Trang_thai==='done')       chip='<span class="chip done">✓ Xong</span>';
+    else if(dLeft===null)            chip='<span class="chip" style="background:var(--bg3);color:var(--text3)">Chưa có</span>';
+    else if(dLeft<0)                 chip=`<span class="chip danger">QH ${Math.abs(dLeft)}n</span>`;
+    else if(dLeft<=7)                chip=`<span class="chip danger">${dLeft} ngày</span>`;
+    else if(dLeft<=30)               chip=`<span class="chip warn">${dLeft} ngày</span>`;
+    else                             chip=`<span class="chip ok">${dLeft} ngày</span>`;
 
     // Badge
     const badges={todo:'<span class="badge todo">Chờ xử lý</span>',doing:'<span class="badge doing">Đang làm</span>',done:'<span class="badge done">Hoàn thành</span>',overdue:'<span class="badge overdue">Quá hạn</span>'};
 
     // Date helper
     const fd=s=>{
-      if(!s) return '<span class="date-cell date-muted">—</span>';
-      const dd=new Date(s); const now3=new Date(); now3.setHours(0,0,0,0);
+      const empty=['','Trống','CHƯA PHÂN CÔNG','Chưa phân công','chưa phân công'];
+      if(!s || empty.includes(s.trim())) return '<span class="date-cell date-muted">Chưa có</span>';
+      const dd=new Date(s);
+      if(isNaN(dd.getTime())) return '<span class="date-cell date-muted">'+s+'</span>';
+      const now3=new Date(); now3.setHours(0,0,0,0);
       const diff=Math.round((dd-now3)/86400000);
       let cls='date-cell';
       if(diff<0) cls+=' date-danger'; else if(diff<=7) cls+=' date-warn'; else cls+=' date-ok';
@@ -567,8 +578,12 @@ function render(){
 // ── HELPERS ───────────────────────────────────────
 function isMine(t){
   if(!me) return false;
-  const qa=(t.QA_phu_trach||'').toLowerCase();
-  return qa===me.name.toLowerCase() || qa===me.email.toLowerCase() || me.email.toLowerCase().includes(qa);
+  const qa=(t.QA_phu_trach||'').toLowerCase().trim();
+  if(!qa || qa==='chưa phân công' || qa==='chưa có' || qa==='trống') return false;
+  const myName=me.name.toLowerCase();
+  const myEmail=me.email.toLowerCase();
+  // Khớp tên (My, Nhi) hoặc email
+  return qa===myName || qa===myEmail || myEmail.startsWith(qa) || qa.includes(myName);
 }
 function escId(t){ return encodeURIComponent(t.Ma_thiet_bi||t.Ten_thiet_bi||''); }
 function taskById(id){ return tasks.find(t=>encodeURIComponent(t.Ma_thiet_bi||t.Ten_thiet_bi||'')===id); }
